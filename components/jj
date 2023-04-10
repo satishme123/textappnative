@@ -1,0 +1,123 @@
+import React, {FC, memo, useState} from 'react';
+import {
+  Keyboard,
+  KeyboardAvoidingView,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  ScrollView,
+  StyleSheet,
+} from 'react-native';
+import Box from '../../atoms/Box';
+import Container from '../../atoms/Container';
+import Addfile from '../../svg/icons/addfile.svg';
+import Sendmessage from '../../svg/icons/send-message.svg';
+import DocumentPicker from 'react-native-document-picker';
+import ProjectChatUserData, {projectChatData} from './ProjectChatUserData';
+import EmojiPicker from 'rn-emoji-keyboard';
+import {EmojiType} from 'rn-emoji-keyboard/lib/typescript/src/types';
+
+const ProjectChat: FC = () => {
+  const [selectedDocs, setSelectedDocs] = useState([]);
+  const [selectedEmoji, setSelectedEmoji] = useState<EmojiType>();
+  const [isOpen, setIsOpen] = React.useState<boolean>(false);
+  const MemoizedEmojiPicker = React.memo(EmojiPicker);
+
+  const selectDoc = async () => {
+    try {
+      const docs: any = await DocumentPicker.pickMultiple({
+        type: [DocumentPicker.types.allFiles],
+      });
+      setSelectedDocs(docs);
+    } catch (err) {
+      if (DocumentPicker.isCancel(err)) {
+        console.log('user cancelled the upload ', err);
+      } else {
+        console.log(err);
+      }
+    }
+  };
+  const DismissKeyboard = ({children}: any) => (
+    <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+      {children}
+    </TouchableWithoutFeedback>
+  );
+
+  const handlePick = (emojiObject: any) => {
+    console.log(emojiObject);
+    setSelectedEmoji(emojiObject);
+  };
+  const handleOnClose = () => {
+    setIsOpen(false);
+  };
+
+  return (
+    <DismissKeyboard>
+      <Container p="lg" alignItems="center">
+        <ScrollView contentInsetAdjustmentBehavior="automatic">
+          <Box>
+            <ProjectChatUserData
+              messages={projectChatData}
+              isSelectedemoji={setIsOpen}
+              emoji={selectedEmoji?.emoji}
+            />
+          </Box>
+        </ScrollView>
+
+        <KeyboardAvoidingView style={styles.textBox}>
+          <Box
+            flexDirection="row"
+            alignItems="center"
+            paddingHorizontal="lg"
+            paddingVertical="sm"
+            justifyContent="space-between"
+            backgroundColor="white"
+            borderRadius="md"
+            borderColor={'$lightGrey'}
+            borderWidth={1}>
+            <TextInput
+              keyboardType="default"
+              underlineColorAndroid="transparent"
+              placeholderTextColor="#9CA3AF"
+              placeholder={'Enter your message...'}
+            />
+            <Box flexDirection="row" alignItems="center">
+              <TouchableOpacity onPress={selectDoc}>
+                <Box marginRight="xl">
+                  <Addfile />
+                </Box>
+              </TouchableOpacity>
+              <TouchableOpacity>
+                <Box marginRight="sm" marginLeft="sm">
+                  <Sendmessage />
+                </Box>
+              </TouchableOpacity>
+            </Box>
+          </Box>
+        </KeyboardAvoidingView>
+
+        {isOpen && (
+          <Box>
+            <MemoizedEmojiPicker
+              onEmojiSelected={emoji => handlePick(emoji)}
+              open={isOpen}
+              onClose={handleOnClose}
+              categoryPosition="top"
+              enableRecentlyUsed
+            />
+          </Box>
+        )}
+      </Container>
+    </DismissKeyboard>
+  );
+};
+
+export default memo(ProjectChat);
+
+const styles = StyleSheet.create({
+  textBox: {
+    width: '100%',
+    position: 'relative',
+    bottom: 0,
+  },
+});
